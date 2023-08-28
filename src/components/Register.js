@@ -7,8 +7,10 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
+import { useHistory, Link } from "react-router-dom";
 
 const Register = () => {
+  const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   let [a, b] = useState({
     username: "",
@@ -53,6 +55,7 @@ const Register = () => {
           enqueueSnackbar('Registered successfully',{ 
             variant: 'success'
           });
+          history.push('/login');
         } catch (e) {
           if(e.response===undefined){
             enqueueSnackbar("Something went wrong. Check that the backend is running, reachable and returns valid JSON.",{ 
@@ -67,7 +70,7 @@ const Register = () => {
             });
       }
     }
-    getLoadIcon(false);  
+    getLoadIcon(false); 
   };
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement user input validation logic
@@ -91,7 +94,7 @@ const Register = () => {
   const validateInput = (data) => {
     try{
       if(data.username===""){
-        throw "Username is a required field";
+        throw ("Username is a required field");
       }
       else if(data.username.length<6){
         throw "Username must be at least 6 characters";
@@ -180,9 +183,9 @@ const Register = () => {
            </Button>}
           <p className="secondary-action">
             Already have an account?{" "}
-             <a className="link" href="#">
+            <Link to="/login" className="link">
               Login here
-             </a>
+            </Link>
           </p>
         </Stack>
       </Box>
