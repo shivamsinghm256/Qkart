@@ -29,6 +29,7 @@ import "./Products.css";
 
 
 const Products = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchedText, setSearchedText] = useState('');
@@ -96,7 +97,7 @@ const Products = () => {
       }
     }
     } 
-  };
+  
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Implement search logic
   /**
@@ -169,11 +170,11 @@ const Products = () => {
         name="search"
         value={searchedText}
         onChange={(e) => debounceSearch(e, debounceTimeOut)}
-      />
+       />
       
-      </Header>
-      {/* Search view for mobiles */}
-      <TextField
+       </Header>
+       {/* Search view for mobiles */}
+        <TextField
         className="search-mobile"
         size="small"
         fullWidth
@@ -188,8 +189,8 @@ const Products = () => {
         name="search"
         value = {searchedText}
         onChange={(e) => debounceSearch(e, debounceTimeOut)}
-      />
-      <Grid container>
+        />
+        <Grid container>
          <Grid item className="product-grid">
            <Box className="hero">
              <p className="hero-heading">
