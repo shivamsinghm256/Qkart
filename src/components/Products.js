@@ -84,11 +84,10 @@ const Products = () => {
     setLoading(true)
     try {
       const data = await axios.get(config.endpoint + "/products");
-      setLoading(false)
       setProducts(data.data);
+      setLoading(false)
     } catch (error) {
       console.log(error);
-      setLoading(false)
       if (error.response) {
         enqueueSnackbar(error.response.data.message, { variant: "error" });
         return null;
@@ -96,6 +95,7 @@ const Products = () => {
         enqueueSnackbar("Something Went Wrong", { variant: "error" });
       }
     }
+      setLoading(false)
     } 
   
 
