@@ -33,12 +33,11 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [searchedText, setSearchedText] = useState('');
   const [debounceTimeOut, setDebounceTimeOut] = useState(null);
+  
   useEffect(()=>{
-    (async() => {
-      let data = await performAPICall()
-      // console.log(data);
-      setProducts(data)
-    })();
+    // (async() => {
+      let data = performAPICall()
+    // })();
     setLoading(false)
   },[]);
 
@@ -83,7 +82,7 @@ const Products = () => {
   const performAPICall = async () => {
     try {
       const data = await axios.get(config.endpoint + "/products");
-      return data.data;
+      setProducts(data.data);
     } catch (error) {
       console.log(error);
     } 
@@ -128,10 +127,10 @@ const Products = () => {
    *
    */
   const debounceSearch = (event, debounceTimeout) => {
-    clearTimeout(debounceTimeOut);
-    let timerId = setTimeout( ()=>{
+    clearTimeout(debounceTimeout);
+    let timerId = setTimeout(()=>{
       performSearch(event.target.value)
-    }, 1000);
+    }, 500);
     setDebounceTimeOut(timerId);
     setSearchedText(event.target.value);
   };
@@ -192,7 +191,7 @@ const Products = () => {
        </Grid>
        {
        loading? <Box className="loading"><CircularProgress/>
-       <h4>loding products...</h4>
+       <h4>Loding Products...</h4>
        </Box>:
        products.length?<Grid container spacing={2} paddingX='12px' marginY='8px'>
           {products.map(product=>
@@ -203,7 +202,7 @@ const Products = () => {
        </Grid>:
        <Box className = "loading">
         <SentimentDissatisfied/>
-         <h4>No Products Found</h4>
+         <h4>No products found</h4>
        </Box>
       }
       <Footer />
