@@ -36,9 +36,9 @@ const Products = () => {
   
   useEffect(()=>{
     // (async() => {
-      let data = performAPICall()
+      performAPICall();
     // })();
-    setLoading(false)
+    // setLoading(false)
   },[]);
 
 
@@ -80,11 +80,21 @@ const Products = () => {
    * }
    */
   const performAPICall = async () => {
+    setLoading(true)
     try {
       const data = await axios.get(config.endpoint + "/products");
+      setLoading(false)
       setProducts(data.data);
     } catch (error) {
       console.log(error);
+      setLoading(false)
+      if (error.response) {
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        return null;
+      } else {
+        enqueueSnackbar("Something Went Wrong", { variant: "error" });
+      }
+    }
     } 
   };
 
@@ -190,8 +200,9 @@ const Products = () => {
          </Grid>
        </Grid>
        {
-       loading? <Box className="loading"><CircularProgress/>
-       <h4>Loding Products...</h4>
+       loading ? 
+       <Box className="loading"><CircularProgress/>
+       <div>Loding Products...</div>
        </Box>:
        products.length?<Grid container spacing={2} paddingX='12px' marginY='8px'>
           {products.map(product=>
