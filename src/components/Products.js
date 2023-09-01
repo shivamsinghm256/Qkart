@@ -33,7 +33,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [searchedText, setSearchedText] = useState("");
   const [debounceTimeOut, setDebounceTimeOut] = useState(null);
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     // (async() => {
     performAPICall();
@@ -151,7 +151,6 @@ const Products = () => {
         <TextField
           className="search-desktop"
           size="small"
-          fullWidth
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -161,10 +160,10 @@ const Products = () => {
           }}
           placeholder="Search for items/categories"
           name="search"
-          value={searchedText}
           onChange={(e) => debounceSearch(e, debounceTimeOut)}
         />
       </Header>
+
       {/* Search view for mobiles */}
       <TextField
         className="search-mobile"
@@ -179,41 +178,46 @@ const Products = () => {
         }}
         placeholder="Search for items/categories"
         name="search"
-        value={searchedText}
         onChange={(e) => debounceSearch(e, debounceTimeOut)}
       />
       <Grid container>
-        <Grid item className="product-grid">
-          <Box className="hero">
-            <p className="hero-heading">
-              India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
-              to your door step
-            </p>
-          </Box>
-        </Grid>
-      </Grid>
-      {loading ? (
-        <Box className="loading">
-          <CircularProgress />
-          <div>Loding Products...</div>
-        </Box>
-      ) : (
-        <div className="product-container">
-          <Grid container spacing={2} paddingX="12px" marginY="8px">
-            products.length ?
-            {products.map((product) => (
-              <Grid item xs={6} md={3} key={product._id}>
-                <ProductCard product={product} />
+        <Grid item className="product-grid" md={token ? 9 : 12}>
+          <Grid container>
+            <Grid item className="product-grid" padding={"1rem"}>
+              <Box className="hero">
+                <p className="hero-heading">
+                  India’s{" "}
+                  <span className="hero-highlight">FASTEST DELIVERY</span> to
+                  your door step
+                </p>
+              </Box>
+            </Grid>
+            {loading ? (
+              <Box className="loading">
+                <CircularProgress />
+                <h4>Loading Products...</h4>
+              </Box>
+            ) : (
+              <Grid container marginY="1rem" paddingX="1rem" spacing={2}>
+                {products.length ? (
+                  products.map((product) => (
+                    <Grid item xs={6} md={3} key={product._id}>
+                      <ProductCard
+                        product={product}
+                      />
+                    </Grid>
+                  ))
+                ) : (
+                  <Box className="loading">
+                    <SentimentDissatisfied color="action" />
+                    <h4 style={{ color: "#636363 " }}>No products found</h4>
+                  </Box>
+                )}
               </Grid>
-            ))}
+            )}
           </Grid>
-          :
-          <Box className="loading">
-            <SentimentDissatisfied />
-            <div>No products found</div>
-          </Box>
-        </div>
-      )}
+        </Grid>
+        </Grid>
 
       <Footer />
     </div>
