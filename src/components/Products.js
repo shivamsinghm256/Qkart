@@ -13,6 +13,7 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import ProductCard from "./ProductCard";
+import Cart, { generateCartItemsFrom } from "./Cart";
 import "./Products.css";
 
 // Definition of Data Structures used
@@ -20,6 +21,14 @@ import "./Products.css";
  * @typedef {Object} Product - Data on product available to buy
  *
  * @property {string} name - The name or title of the product
+import "./Products.css";
+
+
+/**
+ * @typedef {Object} CartItem -  - Data on product added to cart
+ * 
+ * @property {string} name - The name or title of the product in cart
+ * @property {string} qty - The quantity of product added to cart
  * @property {string} category - The category that the product belongs to
  * @property {number} cost - The price to buy the product
  * @property {number} rating - The aggregate rating of the product (integer out of five)
@@ -30,13 +39,21 @@ import "./Products.css";
 const Products = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [products, setProducts] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchedText, setSearchedText] = useState("");
   const [debounceTimeOut, setDebounceTimeOut] = useState(null);
   const token = localStorage.getItem("token");
   useEffect(() => {
+
+    const onLoadHandler = async()=>{
+      const productsData = await performAPICall();
+      const cartData = await fetchCart(token);
+      const cartDetails = await generateCartItemsFrom(cartData, productsData);
+      setItems(cartDetails);
+    }
     // (async() => {
-    performAPICall();
+    onLoadHandler();
     // })();
     // setLoading(false)
   }, []);
@@ -84,6 +101,7 @@ const Products = () => {
       const data = await axios.get(config.endpoint + "/products");
       setProducts(data.data);
       setLoading(false);
+      return data.data;
     } catch (error) {
       console.log(error);
       if (error.response) {
@@ -144,6 +162,185 @@ const Products = () => {
     setSearchedText(event.target.value);
   };
 
+
+  /**
+   * Perform the API call to fetch the user's cart and return the response
+   *
+   * @param {string} token - Authentication token returned on login
+   *
+   * @returns { Array.<{ productId: string, qty: number }> | null }
+   *    The response JSON object
+   *
+   * Example for successful response from backend:
+   * HTTP 200
+   * [
+   *      {
+   *          "productId": "KCRwjF7lN97HnEaY",
+   *          "qty": 3
+   *      },
+   *      {
+   *          "productId": "BW0jAAeDJmlZCF8i",
+   *          "qty": 1
+   *      }
+   * ]
+   *
+   * Example for failed response from backend:
+   * HTTP 401
+   * {
+   *      "success": false,
+   *      "message": "Protected route, Oauth2 Bearer token not found"
+   * }
+   */
+  const fetchCart = async (token) => {
+    if (!token) return;
+
+    try {
+      // TODO: CRIO_TASK_MODULE_CART - Pass Bearer token inside "Authorization" header to get data from "GET /cart" API and return the response data
+
+      let cartData = await axios.get(config.endpoint + "/cart", {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      setItems(generateCartItemsFrom(cartData.data, products));
+      return cartData.data;
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, { variant: "error" });
+        setItems([]);
+      } else {
+        enqueueSnackbar(
+          "Could not fetch cart details. Check that the backend is running, reachable and returns valid JSON.",
+          {
+            variant: "error",
+          }
+        );
+      }
+      return null;
+    }
+  };
+
+  // TODO: CRIO_TASK_MODULE_CART - Return if a product already exists in the cart
+  /**
+   * Return if a product already is present in the cart
+   *
+   * @param { Array.<{ productId: String, quantity: Number }> } items
+   *    Array of objects with productId and quantity of products in cart
+   * @param { String } productId
+   *    Id of a product to be checked
+   *
+   * @returns { Boolean }
+   *    Whether a product of given "productId" exists in the "items" array
+   *
+   */
+  const isItemInCart = (items, productId) => {
+
+    // if(!items || items.length===0) return false;
+    return items.find(item => item.productId === productId);
+
+  };
+
+  /**
+   * Perform the API call to add or update items in the user's cart and update local cart data to display the latest cart
+   *
+   * @param {string} token
+   *    Authentication token returned on login
+   * @param { Array.<{ productId: String, quantity: Number }> } items
+   *    Array of objects with productId and quantity of products in cart
+   * @param { Array.<Product> } products
+   *    Array of objects with complete data on all available products
+   * @param {string} productId
+   *    ID of the product that is to be added or updated in cart
+   * @param {number} qty
+   *    How many of the product should be in the cart
+   * @param {boolean} options
+   *    If this function was triggered from the product card's "Add to Cart" button
+   *
+   * Example for successful response from backend:
+   * HTTP 200 - Updated list of cart items
+   * [
+   *      {
+   *          "productId": "KCRwjF7lN97HnEaY",
+   *          "qty": 3
+   *      },
+   *      {
+   *          "productId": "BW0jAAeDJmlZCF8i",
+   *          "qty": 1
+   *      }
+   * ]
+   *
+   * Example for failed response from backend:
+   * HTTP 404 - On invalid productId
+   * {
+   *      "success": false,
+   *      "message": "Product doesn't exist"
+   * }
+   */
+  const updateToCart = (cartData, products) =>{
+    const cartItems = generateCartItemsFrom(cartData, products);
+    setItems(cartItems);
+  };
+
+  const addToCart = async (
+    token,
+    items,
+    products,
+    productId,
+    qty,
+    options = { preventDuplicate: false }
+  ) => {
+    if(!token){
+      enqueueSnackbar(
+        "Login to add an item to the Cart",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+    if(options.preventDuplicate && isItemInCart(items, productId)){
+      enqueueSnackbar(
+        "Item already in cart. Use the cart sidebar to update quantity or remove item.",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+
+    try {
+      // TODO: CRIO_TASK_MODULE_CART - Pass Bearer token inside "Authorization" header to get data from "GET /cart" API and return the response data
+
+      let cartData = await axios.post(config.endpoint + "/cart",
+      {
+        productId, qty
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'content-Type': 'application/json'
+        }
+      })
+      updateToCart(cartData.data, products);
+
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, { variant: "error" });
+        setItems([]);
+      } else {
+        enqueueSnackbar(
+          "Could not add/update product in the cart. Check that the backend is running, reachable and returns valid JSON.",
+          {
+            variant: "error",
+          }
+        );
+      }
+      return null;
+    }
+    
+  };
+
+
   return (
     <div>
       <Header>
@@ -164,7 +361,6 @@ const Products = () => {
         />
       </Header>
 
-      {/* Search view for mobiles */}
       <TextField
         className="search-mobile"
         size="small"
@@ -180,7 +376,7 @@ const Products = () => {
         name="search"
         onChange={(e) => debounceSearch(e, debounceTimeOut)}
       />
-      <Grid container>
+      <Grid container >
         <Grid item className="product-grid" md={token ? 9 : 12}>
           <Grid container>
             <Grid item className="product-grid" padding={"1rem"}>
@@ -204,6 +400,17 @@ const Products = () => {
                     <Grid item xs={6} md={3} key={product._id}>
                       <ProductCard
                         product={product}
+                        handleAddToCart = {async () => {
+                          await addToCart(
+                            token,
+                            items,
+                            products,
+                            product._id,
+                            1,
+                            {
+                              preventDuplicate: true
+                            })
+                        }}
                       />
                     </Grid>
                   ))
@@ -217,6 +424,18 @@ const Products = () => {
             )}
           </Grid>
         </Grid>
+        {
+          token && (
+            <Grid item className="product-grid" md={token ? 3: 12}>
+              <Cart
+              products={products}
+              items={items}
+              handleQuantity = {addToCart}
+              />
+            </Grid>
+          )
+        }
+         
         </Grid>
 
       <Footer />
