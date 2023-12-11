@@ -426,8 +426,9 @@ const Products = () => {
         </Grid>
         {
           token && (
-            <Grid item className="product-grid" md={token ? 3: 12}>
+            <Grid item className="product-grid" md={token ? 3: 12} bgcolor = "#E9F5E1">
               <Cart
+              hasCheckoutButton = {true}
               products={products}
               items={items}
               handleQuantity = {addToCart}
